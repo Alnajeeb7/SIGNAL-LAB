@@ -9,11 +9,11 @@ export default defineConfig({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
       workbox: {
-        // Cache everything bundled by Vite (JS, CSS, fonts, icon)
+        // Raise the per-file limit to 6 MiB to cover the Plotly chunk
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff,woff2}'],
         runtimeCaching: [
           {
-            // App shell navigation — serve from cache, fall back to network
             urlPattern: ({ request }) => request.mode === 'navigate',
             handler: 'NetworkFirst',
             options: {
@@ -22,7 +22,6 @@ export default defineConfig({
             },
           },
           {
-            // All static assets: JS chunks, CSS, fonts
             urlPattern: ({ url }) =>
               url.origin === self.location.origin &&
               /\.(js|css|woff2?|svg|png|ico)$/.test(url.pathname),
@@ -31,7 +30,7 @@ export default defineConfig({
               cacheName: 'signallab-assets',
               expiration: {
                 maxEntries: 120,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                maxAgeSeconds: 60 * 60 * 24 * 30,
               },
             },
           },
@@ -50,4 +49,20 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    // Silence the chunk size warning in Vite's own output
+    chunkSizeWarningLimit: 6000,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Plotly gets its own chunk (~4.5 MB) — isolated from the app shell
+          'vendor-plotly': ['plotly.js-dist'],
+          // React runtime in its own small chunk — cached separately and almost never changes
+          'vendor-react': ['react', 'react-dom'],
+          // PDF export isolated — only loaded when user generates a report
+          'vendor-jspdf': ['jspdf'],
+        },
+      },
+    },
+  },
 })
