@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useApp } from '../store.jsx'
 import { fmtFreq } from '../dsp'
+import { jsPDF } from 'jspdf'
+import Plotly from 'plotly.js-dist'
 
 export default function Report() {
   const { currentAnalysis, navigate } = useApp()
@@ -23,8 +25,7 @@ export default function Report() {
   const downloadPDF = async () => {
     setDownloading(true)
     try {
-      const [{ jsPDF }, Plotly] = await Promise.all([import('jspdf'), import('plotly.js-dist')])
-      const doc = new jsPDF.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
       const ml = 18, mr = 18, W = 210, cw = W - ml - mr
       let y = 20
 
